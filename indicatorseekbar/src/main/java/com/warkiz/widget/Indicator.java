@@ -38,6 +38,7 @@ public class Indicator {
     private int mIndicatorType;
     private IndicatorSeekBar mSeekBar;
     private View mIndicatorView;
+    private View mIndicatorViewRoot;
     private View mIndicatorCustomView;
     private View mIndicatorCustomTopContentView;
     private float mIndicatorTextSize;
@@ -92,9 +93,11 @@ public class Indicator {
         } else {
             if (mIndicatorType == IndicatorType.CIRCULAR_BUBBLE) {
                 mIndicatorView = new CircleBubbleView(mContext, mIndicatorTextSize, mIndicatorTextColor, mIndicatorColor, "1000");
+                mIndicatorViewRoot = mIndicatorView;
                 ((CircleBubbleView) mIndicatorView).setProgress(mSeekBar.getIndicatorTextString());
             } else {
                 mIndicatorView = View.inflate(mContext, R.layout.isb_indicator, null);
+                mIndicatorViewRoot = mIndicatorView.findViewById(R.id.root);
                 //container
                 mTopContentView = (LinearLayout) mIndicatorView.findViewById(R.id.indicator_container);
                 //arrow
@@ -188,17 +191,17 @@ public class Indicator {
         }
         if (mIndicatorType != IndicatorType.NONE && mIndicatorView != null) {
             mIndicatorView.measure(0, 0);
-            mIndicatorPopW = new PopupWindow(mIndicatorView, WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT, false);
+            mIndicatorPopW = new PopupWindow(mIndicatorView, WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT, false);
         }
     }
 
     View getInsideContentView() {
-        return mIndicatorView;
+        return mIndicatorViewRoot;
     }
 
     void setProgressTextView(String text) {
-        if (mIndicatorView instanceof CircleBubbleView) {
-            ((CircleBubbleView) mIndicatorView).setProgress(text);
+        if (mIndicatorViewRoot instanceof CircleBubbleView) {
+            ((CircleBubbleView) mIndicatorViewRoot).setProgress(text);
         } else if (mProgressTextView != null) {
             mProgressTextView.setText(text);
         }
@@ -224,9 +227,14 @@ public class Indicator {
         }
         refreshProgressText();
         if (mIndicatorPopW != null) {
-            mIndicatorPopW.getContentView().measure(0, 0);
-            mIndicatorPopW.update(mSeekBar, (int) (touchX - mIndicatorPopW.getContentView().getMeasuredWidth() / 2),
-                    -(mSeekBar.getMeasuredHeight() + mIndicatorPopW.getContentView().getMeasuredHeight() - mSeekBar.getPaddingTop() /*- mSeekBar.getTextHeight() */ + mGap), -1, -1);
+            mTopContentView.measure(0, 0);
+            int tx = (int) (touchX - mTopContentView.getMeasuredWidth() / 2);
+            mIndicatorPopW.update(mSeekBar, 0,
+                    -(mSeekBar.getMeasuredHeight() + mTopContentView.getMeasuredHeight() - mSeekBar.getPaddingTop() /*- mSeekBar.getTextHeight() */ + mGap), -1, -1);
+            ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) getContentView().getLayoutParams();
+            mSeekBar.getLocationOnScreen(mLocation);
+            p.leftMargin = mLocation[0] + tx;
+            getContentView().requestLayout();
             adjustArrow(touchX);
         }
     }
@@ -242,17 +250,17 @@ public class Indicator {
         }
         refreshProgressText();
         if (mIndicatorPopW != null) {
-            mIndicatorPopW.getContentView().measure(0, 0);
-            mIndicatorPopW.showAsDropDown(mSeekBar, (int) (touchX - mIndicatorPopW.getContentView().getMeasuredWidth() / 2f),
-                    -(mSeekBar.getMeasuredHeight() + mIndicatorPopW.getContentView().getMeasuredHeight() - mSeekBar.getPaddingTop() /*- mSeekBar.getTextHeight()*/ + mGap));
+            mTopContentView.measure(0, 0);
+            mIndicatorPopW.showAsDropDown(mSeekBar, 0,
+                    -(mSeekBar.getMeasuredHeight() + mTopContentView.getMeasuredHeight() - mSeekBar.getPaddingTop() /*- mSeekBar.getTextHeight()*/ + mGap));
             adjustArrow(touchX);
         }
     }
 
     void refreshProgressText() {
         String tickTextString = mSeekBar.getIndicatorTextString();
-        if (mIndicatorView instanceof CircleBubbleView) {
-            ((CircleBubbleView) mIndicatorView).setProgress(tickTextString);
+        if (mIndicatorViewRoot instanceof CircleBubbleView) {
+            ((CircleBubbleView) mIndicatorViewRoot).setProgress(tickTextString);
         } else if (mProgressTextView != null) {
             mProgressTextView.setText(tickTextString);
         }
