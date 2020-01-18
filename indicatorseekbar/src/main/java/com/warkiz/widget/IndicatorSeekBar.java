@@ -52,8 +52,6 @@ import java.math.BigDecimal;
 
 public class IndicatorSeekBar extends View {
     private static final int THUMB_MAX_WIDTH = 30;
-    private static final String FORMAT_PROGRESS = "${PROGRESS}";
-    private static final String FORMAT_TICK_TEXT = "${TICK_TEXT}";
     private Context mContext;
     private Paint mStockPaint;//the paint for seek bar drawing
     private TextPaint mTextPaint;//the paint for mTickTextsArr drawing
@@ -106,7 +104,7 @@ public class IndicatorSeekBar extends View {
     private View mIndicatorContentView;//the view to replace the raw indicator all view
     private View mIndicatorTopContentView;//the view to replace the raw indicator content view
     private int mShowIndicatorType;//different indicator type.
-    private String mIndicatorTextFormat;
+    private IndicatorTextCallback mIndicatorTextCallback;
     //tick marks
     private float[] mTickMarksX;//the tickMark's drawing X anchor
     private int mTicksCount;//the num of tickMarks
@@ -1540,13 +1538,8 @@ public class IndicatorSeekBar extends View {
     }
 
     String getIndicatorTextString() {
-        if (mIndicatorTextFormat != null && mIndicatorTextFormat.contains(FORMAT_TICK_TEXT)) {
-            if (mTicksCount > 2 && mTickTextsArr != null) {
-                return mIndicatorTextFormat.replace(FORMAT_TICK_TEXT, mTickTextsArr[getThumbPosOnTick()]);
-            }
-        } else if (mIndicatorTextFormat != null && mIndicatorTextFormat.contains(FORMAT_PROGRESS)) {
-            return mIndicatorTextFormat.replace(FORMAT_PROGRESS, getProgressString(mProgress));
-        }
+        if (mIndicatorTextCallback != null)
+            return mIndicatorTextCallback.getIndicatorText(mProgress);
         return getProgressString(mProgress);
     }
 
@@ -1853,22 +1846,17 @@ public class IndicatorSeekBar extends View {
     }
 
     /**
-     * Set a format string with placeholder ${PROGRESS} or ${TICK_TEXT} to IndicatorSeekBar,
-     * the indicator's text would change.
-     * For example:
-     * seekBar.setIndicatorTextFormat("${PROGRESS} %");
-     * seekBar.setIndicatorTextFormat("${PROGRESS} miles");
-     * seekBar.setIndicatorTextFormat("I am ${TICK_TEXT}%");
+     * Set a callback for the indicator text.
      * <p>
      * make sure you have custom and show the tick text before you
      * use ${TICK_TEXT}% , otherwise will be shown a "" value.
      * <p>
      * Also, if the SeekBar type is Custom ,this method will be no work, see{@link IndicatorType}
      *
-     * @param format the format for indicator text
+     * @param callback the text callback to use
      */
-    public void setIndicatorTextFormat(String format) {
-        this.mIndicatorTextFormat = format;
+    public void setIndicatorTextCallback(IndicatorTextCallback callback) {
+        this.mIndicatorTextCallback = callback;
         initTextsArray();
         updateStayIndicator();
     }
