@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
@@ -165,10 +166,10 @@ public class Indicator {
             return;
         }
         int indicatorScreenX = getIndicatorScreenX();
-        if (indicatorScreenX + touchX < mIndicatorPopW.getContentView().getMeasuredWidth() / 2) {
-            setMargin(mArrowView, -(int) (mIndicatorPopW.getContentView().getMeasuredWidth() / 2 - indicatorScreenX - touchX), -1, -1, -1);
-        } else if (mWindowWidth - indicatorScreenX - touchX < mIndicatorPopW.getContentView().getMeasuredWidth() / 2) {
-            setMargin(mArrowView, (int) (mIndicatorPopW.getContentView().getMeasuredWidth() / 2 - (mWindowWidth - indicatorScreenX - touchX)), -1, -1, -1);
+        if (indicatorScreenX + touchX < mTopContentView.getMeasuredWidth() / 2) {
+            setMargin(mArrowView, -(int) (mTopContentView.getMeasuredWidth() / 2 - indicatorScreenX - touchX), -1, -1, -1);
+        } else if (mWindowWidth - indicatorScreenX - touchX < mTopContentView.getMeasuredWidth() / 2) {
+            setMargin(mArrowView, (int) (mTopContentView.getMeasuredWidth() / 2 - (mWindowWidth - indicatorScreenX - touchX)), -1, -1, -1);
         } else {
             setMargin(mArrowView, 0, 0, 0, 0);
         }
@@ -191,7 +192,16 @@ public class Indicator {
         }
         if (mIndicatorType != IndicatorType.NONE && mIndicatorView != null) {
             mIndicatorView.measure(0, 0);
-            mIndicatorPopW = new PopupWindow(mIndicatorView, WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT, false);
+            View popupView = mIndicatorView;
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                popupView = new FrameLayout(mContext);
+                ((ViewGroup) popupView).addView(mIndicatorView);
+            }
+            mIndicatorPopW = new PopupWindow(popupView, WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT, false);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) // TODO: validate the glitch is not present earlier
+                mIndicatorPopW.setAnimationStyle(R.style.SimpleFadeAnimation);
+            else
+                mIndicatorPopW.setAnimationStyle(0);
         }
     }
 
@@ -251,10 +261,11 @@ public class Indicator {
         refreshProgressText();
         if (mIndicatorPopW != null) {
             mTopContentView.measure(0, 0);
-            mIndicatorPopW.showAsDropDown(mSeekBar, 0,
+
+            AppPopupWindowCompat.showAsDropDown(mIndicatorPopW, mSeekBar, 0,
                     -(mSeekBar.getMeasuredHeight() + mTopContentView.getMeasuredHeight() - mSeekBar.getPaddingTop() /*- mSeekBar.getTextHeight()*/ + mGap));
-            adjustArrow(touchX);
         }
+        update(touchX);
     }
 
     void refreshProgressText() {
