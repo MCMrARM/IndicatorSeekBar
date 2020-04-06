@@ -4,7 +4,7 @@ android {
     compileSdkVersion 27
     buildToolsVersion '27.0.3'
     defaultConfig {
-        applicationId "com.warkiz.indicatorseekbar"
+        applicationId "io.mrarm.indicatorseekbar"
         minSdkVersion 24
         targetSdkVersion 27
         versionCode 3
