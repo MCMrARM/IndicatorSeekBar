@@ -1678,6 +1678,10 @@ public class IndicatorSeekBar extends View {
         updateStayIndicator();
     }
 
+    public void setFloatProgress(boolean value) {
+        mIsFloatProgress = value;
+    }
+
     /**
      * Set a new thumb drawable.
      *
